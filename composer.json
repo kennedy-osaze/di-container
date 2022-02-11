@@ -1,0 +1,25 @@
+{
+    "name": "kennedy-osaze/container",
+    "authors": [
+        {
+            "name": "kennedy-osaze",
+            "email": "me.osaze@gmail.com"
+        }
+    ],
+    "require": {
+        "php": "^7.4"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "KennedyOsaze\\Container\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests"
+        }
+    }
+}

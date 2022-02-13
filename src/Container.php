@@ -38,14 +38,16 @@ class Container implements ArrayAccess
 
     protected function getClosure(string $name, $concrete)
     {
-        return function (self $container) use ($name, $concrete) {
-            return $name === $concrete ? $container->build($concrete) : $container->resolve($name);
+        return function (self $container, array $parameters = []) use ($name, $concrete) {
+            return $name == $concrete
+                ? $container->build($concrete)
+                : $container->resolve($concrete, $parameters);
         };
     }
 
     public function instance(string $name, $concrete)
     {
-        $this->instance[$name] = $concrete;
+        $this->instances[$name] = $concrete;
     }
 
     public function has(string $name)
@@ -60,13 +62,13 @@ class Container implements ArrayAccess
 
     public function resolve(string $name, array $parameters = [])
     {
-        if (isset($this->instances[$name]) && ! empty($parameters)) {
+        if (isset($this->instances[$name]) && empty($parameters)) {
             return $this->instances[$name];
         }
 
         $instance = $this->createInstance($name, $parameters);
 
-        if ($this->isSingleton($name) && ! empty($parameters)) {
+        if ($this->isSingleton($name) && empty($parameters)) {
             $this->instances[$name] = $instance;
         }
 

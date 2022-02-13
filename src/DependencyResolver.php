@@ -3,6 +3,7 @@
 namespace KennedyOsaze\Container;
 
 use ReflectionMethod;
+use ReflectionNamedType;
 use ReflectionParameter;
 
 class DependencyResolver
@@ -18,7 +19,7 @@ class DependencyResolver
         $this->container = $container;
     }
 
-    public function using(ReflectionMethod $constructor, array $parameters)
+    public function using(ReflectionMethod $constructor, array $parameters = [])
     {
         $this->dependencies = $constructor->getParameters();
 
@@ -31,10 +32,10 @@ class DependencyResolver
     {
         foreach ($parameters as $key => $value) {
             if (is_numeric($key)) {
-                unset($parameter[$key]);
-            }
+                unset($parameters[$key]);
 
-            $parameter[$this->dependencies[$key]->name] = $value;
+                $parameters[$this->dependencies[$key]->name] = $value;
+            }
         }
 
         return $parameters;
@@ -45,17 +46,32 @@ class DependencyResolver
         $results = [];
 
         foreach ($this->dependencies as $dependency) {
+            $class = $this->getParameterClass($dependency);
 
             if (array_key_exists($dependency->name, $this->parameters)) {
                 $results[] = $this->parameters[$dependency->name];
-            } elseif (is_null($dependency->getDeclaringClass())) {
+            } elseif (is_null($class)) {
                 $results[] = $this->resolveNonClass($dependency);
             } else {
-                $results[] = $this->resolveClass($dependency);
+                $results[] = $this->resolveClass($class, $dependency);
             }
         }
 
         return $results;
+    }
+
+    private function getParameterClass(ReflectionParameter $parameter)
+    {
+        $type = $parameter->getType();
+
+        if (! $type instanceof ReflectionNamedType || $type->isBuiltin()) {
+            return null;
+        }
+
+        $name = $type->getName();
+        $class = $parameter->getDeclaringClass();
+
+        return (is_null($class) || ! in_array($name, ['self', 'static'])) ? $name : $class->getName();
     }
 
     private function resolveNonClass(ReflectionParameter $dependency)
@@ -69,10 +85,10 @@ class DependencyResolver
         ]));
     }
 
-    private function resolveClass(ReflectionParameter $dependency)
+    private function resolveClass(string $class, ReflectionParameter $dependency)
     {
         try {
-            return $this->container->resolve($dependency->getClass()->name);
+            return $this->container->resolve($class);
         } catch (ContainerException $e) {
             if ($dependency->isOptional()) {
                 return $dependency->getDefaultValue();

@@ -14,12 +14,27 @@ class DependencyResolver
 
     private array $parameters;
 
+    /**
+     * Create an instance of the resolver class
+     *
+     * @param \KennedyOsaze\Container\Container $container
+     *
+     * @return void
+     */
     public function __construct(Container $container)
     {
         $this->container = $container;
     }
 
-    public function using(ReflectionMethod $constructor, array $parameters = [])
+    /**
+     * Set the dependencies of the constructor that needs to be resolved with the parameters needed by the constructor
+     *
+     * @param \ReflectionMethod $constructor
+     * @param array $parameters
+     *
+     * @return self
+     */
+    public function using(ReflectionMethod $constructor, array $parameters = []): self
     {
         $this->dependencies = $constructor->getParameters();
 
@@ -28,6 +43,13 @@ class DependencyResolver
         return $this;
     }
 
+    /**
+     * Normalize the parameters array using the dependencies available
+     *
+     * @param array $parameters
+     *
+     * @return array
+     */
     private function rebuildParameters(array $parameters)
     {
         foreach ($parameters as $key => $value) {
@@ -41,6 +63,11 @@ class DependencyResolver
         return $parameters;
     }
 
+    /**
+     * Resolve and retrieve all dependencies
+     *
+     * @return array
+     */
     public function getDependencies()
     {
         $results = [];
@@ -60,6 +87,13 @@ class DependencyResolver
         return $results;
     }
 
+    /**
+     * Get the associated class of a dependency parameter
+     *
+     * @param \ReflectionParameter $parameter
+     *
+     * @return string|null
+     */
     private function getParameterClass(ReflectionParameter $parameter)
     {
         $type = $parameter->getType();
@@ -74,6 +108,15 @@ class DependencyResolver
         return (is_null($class) || ! in_array($name, ['self', 'static'])) ? $name : $class->getName();
     }
 
+    /**
+     * Resolve a non-class dependency
+     *
+     * @param \ReflectionParameter $dependency
+     *
+     * @return mixed
+     *
+     * @throws \KennedyOsaze\Container\ContainerException
+     */
     private function resolveNonClass(ReflectionParameter $dependency)
     {
         if ($dependency->isDefaultValueAvailable()) {
@@ -85,6 +128,17 @@ class DependencyResolver
         ]));
     }
 
+    /**
+     * Resolve a class dependency
+     *
+     * @param string $class
+     *
+     * @param \ReflectionParameter $dependency
+     *
+     * @return mixed
+     *
+     * @throws \KennedyOsaze\Container\ContainerException
+     */
     private function resolveClass(string $class, ReflectionParameter $dependency)
     {
         try {

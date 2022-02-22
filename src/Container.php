@@ -14,12 +14,29 @@ class Container implements ArrayAccess
 
     protected array $instances = [];
 
-    public function singleton(string $name, $concrete = null)
+    /**
+     * Registers a binding as singleton
+     *
+     * @param string $name
+     * @param mixed $concrete
+     *
+     * @return void
+     */
+    public function singleton(string $name, $concrete = null): void
     {
         $this->bind($name, $concrete, true);
     }
 
-    public function bind(string $name, $concrete = null, bool $singleton = false)
+    /**
+     * Registers a binding
+     *
+     * @param string $name
+     * @param mixed $concrete
+     * @param bool $singleton
+     *
+     * @return void
+     */
+    public function bind(string $name, $concrete = null, bool $singleton = false): void
     {
         unset($this->instances[$name]);
 
@@ -36,7 +53,15 @@ class Container implements ArrayAccess
         $this->bindings[$name] = compact('concrete', 'singleton');
     }
 
-    protected function getClosure(string $name, $concrete)
+    /**
+     * Retrieve the closure wrapper for an implementation
+     *
+     * @param string $name
+     * @param mixed $concrete
+     *
+     * @return \Closure
+     */
+    protected function getClosure(string $name, $concrete): Closure
     {
         return function (self $container, array $parameters = []) use ($name, $concrete) {
             return $name == $concrete
@@ -45,21 +70,53 @@ class Container implements ArrayAccess
         };
     }
 
-    public function instance(string $name, $concrete)
+    /**
+     * Registers a value as a singleton
+     *
+     * @param string $name
+     * @param mixed $concrete
+     *
+     * @return void
+     */
+    public function instance(string $name, $concrete): void
     {
         $this->instances[$name] = $concrete;
     }
 
-    public function has(string $name)
+    /**
+     * Determines whether the binding with the provided name exists
+     *
+     * @param string $name
+     *
+     * @return bool
+     */
+    public function has(string $name): bool
     {
         return isset($this->bindings[$name]) || isset($this->instances[$name]);
     }
 
+    /**
+     * Get the implementation for the binding provided by the name
+     *
+     * @param string $name
+     *
+     * @return mixed
+     */
     public function get(string $name)
     {
         return $this->resolve($name);
     }
 
+    /**
+     * Attempts to resolve the binding
+     *
+     * @param string $name
+     * @param array $parameters
+     *
+     * @return mixed
+     *
+     * @throws \KennedyOsaze\Container\ContainerException;
+     */
     public function resolve(string $name, array $parameters = [])
     {
         if (isset($this->instances[$name]) && empty($parameters)) {
@@ -75,6 +132,16 @@ class Container implements ArrayAccess
         return $instance;
     }
 
+    /**
+     * Create an instance of the binding provided by the given name
+     *
+     * @param string $name
+     * @param array $parameters
+     *
+     * @return mixed
+     *
+     * @throws \KennedyOsaze\Container\ContainerException;
+     */
     protected function createInstance(string $name, array $parameters = [])
     {
         $concrete = $this->bindings[$name]['concrete'] ?? $name;
@@ -86,6 +153,16 @@ class Container implements ArrayAccess
         throw new ContainerException("The binding key [$name] does not exists");
     }
 
+    /**
+     * Builds the concrete implementation and its dependencies
+     *
+     * @param mixed $concrete
+     * @param array $parameters
+     *
+     * @return mixed
+     *
+     * @throws \KennedyOsaze\Container\ContainerException;
+     */
     public function build($concrete, array $parameters = [])
     {
         if ($concrete instanceof Closure) {
@@ -104,7 +181,16 @@ class Container implements ArrayAccess
         return $reflector->newInstanceArgs($dependencies);
     }
 
-    protected function getReflectionInstance($concrete)
+    /**
+     * Get a reflection class that represents the concrete implementation
+     *
+     * @param mixed $concrete
+     *
+     * @return \ReflectionClass
+     *
+     * @throws \KennedyOsaze\Container\ContainerException;
+     */
+    protected function getReflectionInstance($concrete): ReflectionClass
     {
         try {
             $reflector = new ReflectionClass($concrete);
@@ -119,41 +205,75 @@ class Container implements ArrayAccess
         return $reflector;
     }
 
-    protected function getDependencyResolver()
+    /**
+     * Get the dependency resolver
+     *
+     * @return \KennedyOsaze\Container\DependencyResolver
+     */
+    protected function getDependencyResolver(): DependencyResolver
     {
         return new DependencyResolver($this);
     }
 
-    public function isSingleton(string $name)
+    /**
+     * Determine whether a concrete was bound as a singleton
+     *
+     * @param string $name
+     *
+     * @return bool
+     */
+    public function isSingleton(string $name): bool
     {
         return isset($this->instances[$name]) || ($this->bindings[$name]['singleton'] ?? false);
     }
 
-    public function getBindings()
+    /**
+     * Get all bindings registered in the container
+     *
+     * @return array
+     */
+    public function getBindings(): array
     {
         return $this->bindings;
     }
 
+    /**
+     * Clear up all bindings and instances registered in the container
+     *
+     * @return void
+     */
     public function flush()
     {
-        $this->bindings = $this->instances = $this->resolved = [];
+        $this->bindings = $this->instances = [];
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function offsetGet($offset)
     {
         return $this->get($offset);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function offsetExists($offset): bool
     {
         return $this->has($offset);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function offsetSet($offset, $value): void
     {
         $this->bind($offset, $value);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function offsetUnset($offset): void
     {
         unset($this->bindings[$offset], $this->instances[$offset]);

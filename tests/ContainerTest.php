@@ -53,7 +53,12 @@ class ContainerTest extends TestCase
 
         $container->bind('bar', Bar::class);
 
+        $object1 = $container->resolve('bar');
+        $object2 = $container->resolve('bar');
+
         $this->assertInstanceOf(Bar::class, $container->get('bar'));
+        $this->assertInstanceOf(Bar::class, $container->resolve('bar'));
+        $this->assertNotSame($object1, $object2);
     }
 
     public function testInterfaceResolution()

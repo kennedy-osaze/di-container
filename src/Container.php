@@ -14,6 +14,22 @@ class Container implements ArrayAccess
 
     protected array $instances = [];
 
+    protected static $instance;
+
+    /**
+     * Get or create a new instance of the container
+     *
+     * @return static
+     */
+    public static function getInstance()
+    {
+        if (! is_null(static::$instance)) {
+            return static::$instance;
+        }
+
+        return static::$instance = new static();
+    }
+
     /**
      * Registers a binding as singleton
      *

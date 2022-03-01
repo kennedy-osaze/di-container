@@ -1,5 +1,10 @@
 ## Container
 
+#### Installation
+Run `composer install`.
+
+#### Usages
+
 ##### Create a binding
 
 ```php
